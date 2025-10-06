@@ -24,7 +24,7 @@ from sklearn.ensemble import RandomForestClassifier
 from imblearn.pipeline import Pipeline
 from imblearn.over_sampling import SMOTE
 
-# ---- Configuration ----
+# configuration 
 MODELS_DIR  = Path("models");  MODELS_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUTS_DIR = Path("outputs"); OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
 EXCEL_PATH = None  # set to local "CTG.xls" if uploaded; else it will download from URL
@@ -37,7 +37,7 @@ FEATURES = [
     'Mode','Mean','Median','Variance','Tendency'
 ]
 
-# ---- Data loader (auto-detect label) ----
+# data loader (auto-detect label) 
 def load_ctg(excel_path=None, url=URL):
     src = excel_path if excel_path is not None else url
     xl = pd.ExcelFile(src)
@@ -54,7 +54,7 @@ df, target_col = load_ctg(EXCEL_PATH)
 df.columns = df.columns.astype(str).str.strip()
 print("Using target:", target_col)
 
-# ---- Select features/target ----
+# select features/target 
 features = [c for c in FEATURES if c in df.columns]
 data = df[features + [target_col]].dropna().copy()
 y = data[target_col].astype(int)
@@ -63,12 +63,12 @@ if y.min() == 1:  # map 1,2,3 → 0,1,2
 X = data[features].copy()
 print("Class distribution:\n", y.value_counts())
 
-# ---- Train/test split ----
+# train/test split 
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, stratify=y, test_size=0.2, random_state=42
 )
 
-# ---- Pipeline + CV helpers ----
+# pipeline + CV helpers 
 def make_pipe(model):
     return Pipeline(steps=[
         ("scaler", StandardScaler()),
@@ -78,7 +78,7 @@ def make_pipe(model):
 
 cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
-# ---- Baselines (LogReg, RF 300) ----
+# baselines (LogReg, RF 300) 
 baselines = {
     "LogReg": LogisticRegression(max_iter=1000, class_weight="balanced", random_state=42),
     "RF300":  RandomForestClassifier(n_estimators=300, class_weight="balanced", random_state=42),
@@ -91,7 +91,7 @@ for name, mdl in baselines.items():
     )
     print(f"{name} | Macro-F1={scores['test_macro_f1'].mean():.3f} | BalAcc={scores['test_bal_acc'].mean():.3f}")
 
-# ---- GridSearchCV for RF ----
+# gridSearchCV for RF 
 rf_pipe = make_pipe(RandomForestClassifier(class_weight="balanced", random_state=42))
 param_grid = {
     "clf__n_estimators": [200, 300, 500],
@@ -104,7 +104,7 @@ best_model = grid.best_estimator_
 print("Best RF params:", grid.best_params_)
 print("Best Macro-F1 (CV):", grid.best_score_)
 
-# ---- Hold-out evaluation ----
+# hold-out evaluation 
 best_model.fit(X_train, y_train)
 y_pred = best_model.predict(X_test)
 bal = balanced_accuracy_score(y_test, y_pred)
@@ -114,7 +114,7 @@ print("Balanced Acc:", bal)
 print("Macro F1    :", mf1)
 print(classification_report(y_test, y_pred))
 
-# ---- Confusion matrix plot ----
+# confusion matrix plot 
 cm = confusion_matrix(y_test, y_pred)
 plt.figure()
 sns.heatmap(cm, annot=True, fmt='d', cmap="Blues")
@@ -124,7 +124,7 @@ plt.tight_layout()
 plt.savefig(OUTPUTS_DIR / "confusion_matrix.png", dpi=200)
 plt.show()
 
-# ---- Feature importances (CSV + plot) ----
+# feature importances (CSV + plot) 
 rf_fitted = best_model.named_steps["clf"]
 importances = pd.Series(rf_fitted.feature_importances_, index=features).sort_values(ascending=False)
 importances.to_csv(OUTPUTS_DIR / "feature_importances.csv")
@@ -136,7 +136,7 @@ plt.tight_layout()
 plt.savefig(OUTPUTS_DIR / "feature_importances.png", dpi=200)
 plt.show()
 
-# ---- Save metrics + model weights ----
+# save metrics + model weights 
 with open(OUTPUTS_DIR / "metrics.json", "w", encoding="utf-8") as f:
     json.dump({"balanced_accuracy": float(bal), "macro_f1": float(mf1)}, f, indent=2)
 
@@ -146,7 +146,7 @@ joblib.dump(best_model, weights_path)
 print("Saved model to:", weights_path.resolve())
 print("Artifacts in:", OUTPUTS_DIR.resolve())
 
-# ---- Optional: SHAP summary ----
+# SHAP summary 
 if USE_SHAP:
     try:
         import shap
