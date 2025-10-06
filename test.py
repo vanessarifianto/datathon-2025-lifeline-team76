@@ -7,7 +7,6 @@ Original file is located at
     https://colab.research.google.com/drive/1xJ7kDQ7b1gO0Ry2h32SsZVpUJ7LGTGs5
 """
 
-# test.py (Colab one-click version)
 import os
 from pathlib import Path
 import numpy as np
@@ -20,7 +19,7 @@ from imblearn.over_sampling import SMOTE
 from imblearn.pipeline import Pipeline
 import warnings
 
-# --- utilities
+# utilities
 def ensure_dir(p: Path):
     p.parent.mkdir(parents=True, exist_ok=True)
     return p
@@ -51,7 +50,7 @@ def detect_expected_features(clf):
                     return list(getattr(step, attr))
     return None
 
-# --- main logic
+# main logic
 model_path = Path("/content/models/rf_smote_pipeline.joblib")
 data_dir = Path("/content/data")
 input_csv = data_dir / "new_cases.csv"
